@@ -1,0 +1,149 @@
+---
+title: "Avaliação informacional de amostra de Arboviroses do Gal"
+subtitle: "Este documento é baseado nos dados de vigilância laboratorial de arboviroses"
+format:
+  lumo-html:
+    logo: "logo.png"                             # Optional. Path to a logo displayed above the title
+    primary-color: "#a31f37"
+    self-contained: true
+    is-particlejs-enabled: true                   # Optional: display interactive particles in the document header
+author: Bragatte, Deney e Juan
+credit: Bragatte
+date: 2024-10-16
+---
+
+## Introdução
+
+Este relatório apresenta os resultados dos exames laboratoriais relacionados à vigilância das arboviroses. Os dados incluem informações sobre os métodos utilizados, as técnicas aplicadas, a contagem de exames realizados, e os códigos LOINC associados a cada método. A vigilância de arboviroses é fundamental para identificar surtos, monitorar a prevalência e tomar ações preventivas adequadas para controlar a disseminação dos vírus. Este documento visa não apenas apresentar os resultados, mas também fornecer uma visão detalhada dos métodos e técnicas utilizadas para assegurar a qualidade dos dados e a precisão dos diagnósticos. A análise dos resultados dos exames contribui significativamente para entender o cenário epidemiológico das arboviroses em nossa região e fornecer suporte para a tomada de decisão em saúde pública.
+
+Este trabalho é fruto de uma parceria que visa a seleção de agentes etiológicos entre arboviroses e dados informacionais relevantes para a transformação em dados computacionais, oportunizando a interoperabilidade entre o GAL (Gerenciador de Ambiente Laboratorial) e a RNDS (Rede Nacional de Dados em Saúde).
+
+::: {.column-margin}
+
+Para mais detalhes sobre os monitoramentos de patógenos realizados pelo ITpS, acesse: [Instituto Todos pela Saúde](https://www.itps.org.br/pesquisas)
+
+:::
+
+## Resumo dos Dados
+
+A tabela a seguir resume os exames laboratoriais e suas características, detalhando os métodos, técnicas, contagens e códigos associados:
+
+```{r, warning=FALSE, message=FALSE}
+library(knitr)
+library(dplyr)
+library(readr)
+# Carregar os dados da tabela na raiz do repositório
+dados <- read_csv("gal_arbo_Loinc.csv")
+glimpse(dados)
+```
+
+A tabela destaca a diversidade dos métodos utilizados, que vão desde técnicas sorológicas até métodos avançados de biologia molecular, cada um com características específicas para detecção de arboviroses em diferentes contextos clínicos.
+
+## Tabela Interativa dos Dados
+
+Abaixo, apresentamos uma tabela interativa para uma visualização mais detalhada dos dados laboratoriais. Essa tabela permite filtrar, ordenar e explorar os dados de forma dinâmica.
+
+```{r, warning=FALSE, message=FALSE}
+library(DT)
+# Exibir a tabela interativa
+datatable(dados, filter = "top", selection = list(mode = "multiple", selected = NULL), options = list(pageLength = 5, dom = 'Bfrtip', buttons = c('selectAll', 'selectNone')))
+```
+
+Esta tabela permite uma análise detalhada dos dados, oferecendo funcionalidades de filtragem e ordenação que facilitam a visualização das informações relevantes.
+
+[Link para a planilha completa no Google Sheets](https://docs.google.com/spreadsheets/d/1VE7LCd37af9Jj0zt2-AgNHKwQMsHXTf74LTIDFBE6Jg/edit?usp=sharing)
+
+## Gráficos dos Dados Interativos
+
+O gráfico a seguir combina dois tipos de visualização: um gráfico de pizza e um gráfico de barras, ambos interativos, para fornecer uma visão abrangente da distribuição dos exames.
+
+```{r, fig.cap="Figure: Gráficos de pizza e barras conectados com `ggiraph`", warning=FALSE, message=FALSE}
+library(ggiraph)
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+
+# Resumir a contagem por Exame Agrupado
+dados_agrupados <- dados %>%
+  group_by(exame_agrupado) %>%
+  summarise(Total = sum(count))
+
+# Criar gráfico de pizza interativo
+p1 <- ggplot(dados_agrupados, aes(x = "", y = Total, fill = exame_agrupado, tooltip = exame_agrupado, data_id = exame_agrupado)) +
+  geom_bar_interactive(width = 1, stat = "identity") +
+  coord_polar("y") +
+  theme_minimal() +
+  labs(
+    title = "Distribuição dos Exames Agrupados",
+    fill = "Exame Agrupado"
+  ) +
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank(), panel.grid = element_blank(), axis.text = element_blank())
+
+# Criar gráfico de barras interativo para Método e Técnica
+p2 <- ggplot(dados, aes(x = metodo, y = count, fill = metodo_tecnica, tooltip = metodo_tecnica, data_id = metodo_tecnica)) +
+  geom_bar_interactive(stat = "identity", position = "dodge") +
+  theme_minimal() +
+  labs(
+    title = "Número de Exames por Método e Técnica",
+    x = "Método",
+    y = "Número de Exames",
+    fill = "Técnica"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Combinar os gráficos usando patchwork e renderizar como interativo, lado a lado
+girafe_p1 <- girafe(ggobj = p1)
+girafe_p2 <- girafe(ggobj = p2)
+
+girafe_p1
+girafe_p2
+```
+
+Os gráficos acima fornecem uma visão interativa dos dados laboratoriais, permitindo uma análise mais profunda dos exames realizados por diferentes métodos e agrupamentos. A interação ajuda a destacar informações específicas e facilita a exploração dos resultados.
+
+## Metodologia
+
+Os exames foram realizados utilizando diferentes métodos, incluindo sorologia, isolamento viral e biologia molecular. Cada método tem uma técnica específica, detalhada na tabela acima. A contagem dos exames realizados varia conforme o método, sendo a RT-PCR em tempo real o mais utilizado, com 7020 exames realizados. A diversidade de metodologias reflete a complexidade da vigilância das arboviroses, uma vez que diferentes técnicas são necessárias para atender a diferentes estágios de infecção e tipos de arbovírus.
+
+### Detalhes Metodológicos
+
+1. **Sorologia - ELISA (Enzimaimunoensaio)**: 
+   - Utilizado para detectar a presença de anticorpos contra arbovírus no soro dos pacientes. Este método baseia-se na interação antígeno-anticorpo e utiliza uma enzima que gera uma reação colorimétrica para indicar um resultado positivo ou negativo.
+   - **Vantagens**: Alta sensibilidade e especificidade para detecção de anticorpos. É útil para identificar infecções em estágios mais avançados, quando o corpo já produziu uma quantidade significativa de anticorpos.
+   - **Desvantagens**: Pode apresentar resultados falsos positivos em casos de reatividade cruzada com outros vírus similares. Além disso, não é ideal para detectar infecções recentes, pois depende da resposta imune do paciente.
+
+2. **Sorologia - Inibição de Hemaglutinação (IH)**:
+   - Esta técnica mede a capacidade dos anticorpos presentes no soro de inibir a aglutinação dos glóbulos vermelhos. É utilizada principalmente para detectar infecções prévias e pode ser aplicada em estudos epidemiológicos para identificar a proporção da população já exposta ao vírus.
+   - **Vantagens**: Útil para a detecção de infecções em estágios tardios, permitindo uma visão de longo prazo sobre a exposição ao vírus.
+   - **Desvantagens**: Menor especificidade em comparação a outros métodos sorológicos e requer padronização rigorosa para evitar resultados falsos. A interpretação dos resultados pode ser complexa e depender da habilidade do técnico.
+
+3. **Isolamento Viral em Células C6/36**:
+   - Consiste na inoculação de amostras clínicas em células de mosquito (linha celular C6/36) para o isolamento do vírus. Este método permite a detecção direta do vírus viável e é importante para a pesquisa e caracterização de novas variantes virais.
+   - **Vantagens**: Permite a obtenção de amostras virais para estudos posteriores, como sequenciamento genômico e caracterização fenotípica. É extremamente valioso para estudos detalhados sobre o comportamento do vírus.
+   - **Desvantagens**: Processo demorado e requer infraestrutura laboratorial especializada. Além disso, nem todas as amostras resultam em crescimento viral, o que limita sua aplicabilidade em diagnósticos rápidos.
+
+4. **Isolamento Viral Convencional**:
+   - Método tradicional de isolamento viral que utiliza culturas celulares para detectar a presença do vírus em amostras clínicas. Este método é fundamental para confirmar infecções e para pesquisas que visam compreender a replicação e os efeitos citopáticos do vírus.
+   - **Vantagens**: Alta precisão na confirmação da presença do vírus, sendo um dos métodos mais confiáveis para isolar patógenos e estudar sua patogênese.
+   - **Desvantagens**: Tempo necessário para crescimento do vírus pode ser longo, o que limita sua aplicabilidade em situações de emergência. Além disso, exige um laboratório de biossegurança nível 3 para garantir a segurança dos profissionais envolvidos.
+
+5. **Biologia Molecular - RT-PCR em Tempo Real**:
+   - Utiliza a reação em cadeia da polimerase com transcrição reversa para amplificar e detectar o RNA viral. É considerado o padrão-ouro para diagnóstico de arboviroses devido à sua alta sensibilidade e especificidade. Este método é essencial para a detecção precoce, antes mesmo da manifestação de sintomas clínicos significativos.
+   - **Vantagens**: Detecção precoce da infecção, mesmo em baixos níveis de RNA viral, o que permite uma resposta rápida e eficaz para conter surtos. Também oferece a possibilidade de quantificar a carga viral, importante para avaliar a gravidade da infecção.
+   - **Desvantagens**: Requer equipamento especializado e pessoal treinado, além de insumos relativamente caros. A logística de coleta e transporte das amostras precisa ser rigorosamente controlada para evitar degradação do material genético.
+
+## Resultados e Interpretações
+
+Os resultados possíveis variam conforme o método de análise, podendo incluir interpretações como "Positivo", "Negativo", "Detectável" e "Indeterminado". Esses resultados são importantes para a vigilância e controle das arboviroses, permitindo identificar a presença ou ausência dos agentes virais nos indivíduos testados. A interpretação correta dos resultados auxilia na tomada de decisões para intervenções em saúde pública, como campanhas de vacinação e ações de controle vetorial. A diversidade dos resultados e a especificidade de cada técnica reforçam a importância de uma abordagem multifacetada na vigilância laboratorial.
+
+## Conclusão
+
+O presente relatório fornece uma visão abrangente dos exames realizados no contexto da vigilância de arboviroses. A diversidade de métodos utilizados, juntamente com a ampla contagem de exames realizados, evidencia o esforço contínuo para monitorar e controlar a disseminação dessas doenças. A vigilância laboratorial é uma ferramenta essencial para a saúde pública, permitindo a identificação precoce de surtos e a implementação de medidas de controle adequadas. Com base nos resultados apresentados, é possível observar a relevância do uso combinado de diferentes técnicas, cada uma com suas vantagens e limitações, para fornecer uma resposta eficaz contra a disseminação das arboviroses. O desenvolvimento contínuo de tecnologias e a capacitação dos profissionais são fundamentais para melhorar ainda mais a eficiência e a precisão da vigilância.
+
+## Referências
+
+- Instituto Todos pela Saúde [ITpS](https://www.itps.org.br)
+- Guia de Resultados de Exames Laboratoriais: [RNDS Guia](https://rnds-guia.saude.gov.br/docs/rel/mi-rel/)
+- Modelo FHIR para Resultados de Exames Laboratoriais: [Rede Nacional de Dados em Saúde](https://simplifier.net/RedeNacionaldeDadosemSaude/BRResultadoExameLaboratorial-duplicate-2/~json)
+- Manual de Vigilância e Controle de Arboviroses: [Ministério da Saúde](http://bvsms.saude.gov.br/bvs/publicacoes/manual_vigilancia_controle_arboviroses.pdf)
+- Protocolo de Diagnóstico Laboratorial de Dengue: [Ministério da Saúde](http://bvsms.saude.gov.br/bvs/publicacoes/protocolo_diagnostico_laboratorial_dengue.pdf)
