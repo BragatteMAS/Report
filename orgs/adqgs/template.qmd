@@ -1,0 +1,292 @@
+---
+title: "Análise de Dados para Qualificação em Gestões na Saúde, Educação e Inovação"  
+subtitle: "Este documento é um material inicial para o curso de Análise de Dados com R oferecido pelo <a href='https://ead.icepi.es.gov.br/icepi/login/index.php'>ICEPi</a>"  
+format:
+  adqgs-html: 
+    logo: "logo.png"                             # Opcional. Pasta para o logo mostrado acima do título
+    github-repo: "https://www.github.com"        # Opcional. Adiciona github no canto superior direito
+    primary-color: "##1F5CA9"                    # Hex para azul ICEPi
+    self-contained: true
+    is-particlejs-enabled: true                  # Opcional: mostra o efeito das particulas interativas
+author: Bragatte, Isaac, Vital, Bertolde
+credit: Bragatte
+date: 2024-10-17
+---
+    
+    
+## Introdução
+
+Este curso de introdução à análise de dados com R é uma excelente oportunidade para aprender as bases da linguagem R e como aplicá-la na análise de dados. O objetivo é transformar seu código e ideias em insights práticos de forma clara e eficiente.
+
+Neste material, abordaremos como utilizar o R e seus alguns pacotes para a manipulação de dados, visualização e geração de relatórios. Ao longo do curso, você se familiarizará com as principais bibliotecas e aprenderá a criar gráficos e relatórios interativos para comunicar suas descobertas de maneira impactante.
+
+
+## Carregar Pacotes
+
+Certifique-se de carregar **todos os seus pacotes** no início do documento, para clareza e consistência.
+
+Note que os trechos de código são ocultos por padrão. Você pode ajustar esse comportamento com a opção `code-fold` no cabeçalho YAML do documento.
+
+
+```{r, warning=F, message=F}
+library(tidyverse) 
+library(hrbrthemes) # <1>
+library(viridis) # <2>
+library(ggiraph)
+library(patchwork) 
+library(sf)
+```
+
+1. este pacote fornece meu tema favorito do `ggplot2`: `theme_ipsum()`
+2. porque eu estava muito preguiçoso para procurar algo melhor no [R Color Finder](https://r-graph-gallery.com/color-palette-finder)!
+    
+:::{.callout}
+Por falar nisso, você deve abrir o trecho de código dobrado acima. ⬆️
+Há uma pequena surpresa incrível no lado direito dele.
+:::
+    
+    
+## Principais Funcionalidades
+
+### Tipografia
+
+Você deve ter notado que a tipografia difere do estilo padrão do Quarto. Também adicionei __espaçamento extra__ acima de cada título para melhor legibilidade, e sublinhei-os para dar mais destaque aos cabeçalhos.
+
+### Cabeçalho e Rodapé
+
+O cabeçalho é totalmente personalizado, incluindo um canto divertido do GitHub que vincula ao código original. Além disso, há partículas animadas para um toque de descontração. Role para baixo e você encontrará um rodapé personalizado também.
+
+<hr/>
+    
+Para uma lista completa de funcionalidades e verificar o criador original deste relatório, [visite a documentação - atenção material em inglês](https://www.productive-r-workflow.com/r/bonus/lumo-quarto-template)!
+
+### Mapa Interativo
+
+Ah, e já que estamos aqui, sabia que você pode incluir facilmente um mapa interativo em largura total com o `leaflet` em um documento Quarto? 😍
+
+Versão simples com o local de nascimento do R.
+```{r}
+#| column: screen
+#| out-width: 100%
+
+# Carregar a biblioteca.
+library(leaflet)
+
+# Fazer um mapa com zoom interativo e marcadores de cores diferentes
+leaflet() %>%
+  addTiles() %>% # Adicionar tiles padrão do OpenStreetMap
+  addMarkers(lng = 174.768, lat = -36.852, popup = "O local de nascimento do R")
+```
+
+Ou convido vocês a usarem o zoom para dentro Brasil encontrar no Espirito Santo duas localidades comentados em nosso encontro síncrono.
+```{r}
+#| column: screen
+#| out-width: 100%
+
+# Carregar a biblioteca.
+library(leaflet)
+
+# Fazer um mapa com zoom interativo e marcadores de cores diferentes
+leaflet() %>%
+  addTiles() %>% # Adicionar tiles padrão do OpenStreetMap
+  setView(lng = -40.3381, lat = -20.3222, zoom = 8) %>% # Definir o centro do mapa e o nível de zoom
+  addMarkers(lng = -40.3381, lat = -20.3222, popup = "Não é o mar, é perto da polícia federal de Vitória", 
+             icon = makeIcon(iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png")) %>%
+  addMarkers(lng = -40.5439, lat = -19.4111, popup = "Marilândia, cidade mais especial do mundo na opinião do Bertolde", 
+             icon = makeIcon(iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"))
+```
+
+
+## Como Funciona
+
+Ao longo do curso, você aprenderá a utilizar o R para explorar e analisar dados de diferentes fontes. Utilizaremos bibliotecas como `tidyverse` para manipulação de dados, `ggplot2` para criar visualizações e `sf` para lidar com dados espaciais.
+
+Este material também mostrará como construir relatórios reproduzíveis que podem ser facilmente compartilhados com colegas e superiores, ajudando na tomada de decisões com base em dados concretos.
+
+<hr/>
+
+```{r}
+library(DT)
+data(iris)
+
+# Fazendo uma tabela interativa
+datatable(iris, filter = "top")
+```
+
+    
+Além disso, exploraremos gráficos interativos com o [ggiraph](https://r-graph-gallery.com/package/ggiraph.html). Experimente passar o mouse sobre um dos gráficos abaixo e veja a interatividade em ação!
+    
+    
+```{r, fig.cap="Figura: Louca de especial com o pacote `ggiraph`"}
+
+# Read the full world map
+world_sf <- read_sf("https://raw.githubusercontent.com/holtzy/R-graph-gallery/master/DATA/world.geojson")
+world_sf <- world_sf %>%
+  filter(!name %in% c("Antarctica", "Greenland"))
+
+# Create a sample dataset
+happiness_data <- data.frame(
+  Country = c(
+    "France", "Germany", "United Kingdom",
+    "Japan", "China", "Vietnam", "Brazil",
+    "United States of America", "Canada", "Mexico"
+  ),
+  Continent = c(
+    "Europe", "Europe", "Europe",
+    "Asia", "Asia", "Asia", "South America",  # Corrija aqui se necessário
+    "North America", "North America", "North America"
+  ),
+  Happiness_Score = rnorm(mean = 30, sd = 20, n = 10),
+  GDP_per_capita = rnorm(mean = 30, sd = 20, n = 10),
+  Social_support = rnorm(mean = 30, sd = 20, n = 10),
+  Healthy_life_expectancy = rnorm(mean = 30, sd = 20, n = 10)
+)
+
+
+# Join the happiness data with the full world map
+world_sf <- world_sf %>%
+  left_join(happiness_data, by = c("name" = "Country"))
+
+
+# Create the first chart (Scatter plot)
+p1 <- ggplot(world_sf, aes(
+  GDP_per_capita,
+  Happiness_Score,
+  tooltip = name,
+  data_id = Continent,
+  color = Continent
+)) +
+  geom_point_interactive(data = filter(world_sf, !is.na(Happiness_Score)), size = 4) +
+  theme_minimal() +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    legend.position = "none"
+  )
+
+# Create the second chart (Bar plot)
+p2 <- ggplot(world_sf, aes(
+  x = reorder(name, Happiness_Score),
+  y = Happiness_Score,
+  tooltip = name,
+  data_id = Continent,
+  fill = Continent
+)) +
+  geom_col_interactive(data = filter(world_sf, !is.na(Happiness_Score))) +
+  coord_flip() +
+  theme_minimal() +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    legend.position = "none"
+  )
+
+# Create the third chart (choropleth)
+p3 <- ggplot() +
+  geom_sf(data = world_sf, fill = "lightgrey", color = "lightgrey") +
+  geom_sf_interactive(
+    data = filter(world_sf, !is.na(Happiness_Score)),
+    aes(fill = Continent, tooltip = name, data_id = Continent)
+  ) +
+  coord_sf(crs = st_crs(3857)) +
+  theme_void() +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    legend.position = "none"
+  )
+
+# Combine the plots
+combined_plot <- (p1 + p2) / p3 + plot_layout(heights = c(1, 2))
+
+# Create the interactive plot
+interactive_plot <- girafe(ggobj = combined_plot)
+interactive_plot <- girafe_options(
+  interactive_plot,
+  opts_hover(css = "fill:red;stroke:black;")
+)
+
+interactive_plot
+```
+
+
+## Uma seção cinza
+
+::: {.cell .page-columns .page-full .column-screen .grey-section}
+É sempre bom ter uma seção cinza. Faz o documento respirar um pouco. Isto requer um pouquinho mais de copia e cola, não precisamos falar disso agora mas o exemplo esta aqui [`Repositório de exemplo`]() para garantir que você possa fazer seções como esta muito facilmente. 
+
+Vamos usar este espaço para um exemplo "matematicamente musical" (quem foi no primeiro encontro síncrono pegou a referência):
+
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+:::
+
+## Outras dicas de Quarto e Rmakdown
+
+Por exemplo, se você está criando vários gráficos, cada um destacando diferentes aspectos do seu conjunto de dados, considere usar *pills* = *:::* para organizá-los!
+
+::: {.panel-tabset .nav-pills}
+
+## Scatterplot
+
+
+Este é um velho e bom gráfico de dispersão do conjunto de dados iris (biólogos adoram, declaro viés). Se você quiser aprender mais sobre como fazer gráficos no R, segue um exemplo de [galeria de gráficos R](https://www.r-graph-gallery.com)!
+
+```{r, fig.align='center'}
+ggplot(iris, aes(x=Sepal.Length, y=Sepal.Width, color=Species)) + 
+    geom_point() +
+    theme_ipsum()
+```
+
+## Boxplot
+
+
+Você também pode fazer um [boxplot](https://r-graph-gallery.com/89-box-and-scatter-plot-with-ggplot2.html), mas por favor, não esconda a distribuição subjacente!😋
+
+```{r, fig.align='center'}
+# create a dataset
+data <- data.frame(
+  name=c( rep("A",500), rep("B",500), rep("B",500), rep("C",20), rep('D', 100)  ),
+  value=c( rnorm(500, 10, 5), rnorm(500, 13, 1), rnorm(500, 18, 1), rnorm(20, 25, 4), rnorm(100, 12, 1) )
+)
+
+# Plot
+data %>%
+  ggplot( aes(x=name, y=value, fill=name)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("O gráfico de boxplot esconde a distribuição das amostras") +
+    xlab("")
+```
+
+## Jittering
+
+
+Veja o que esta acontecendo agora que os pontos de dados individuais são visíveis! Seria uma pena perder isso.
+
+```{r, fig.align='center'}
+data %>%
+  ggplot( aes(x=name, y=value, fill=name)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6) +
+    geom_jitter(color="black", size=0.4, alpha=0.9) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Um boxplot com gráfico de jitter") +
+    xlab("")
+```
+
+
+:::
+
+## Agradecimentos
+Queremos agradecer a vocês por juntarem-se conosco nesta jornada de aprendizado. Espero que vocês aproveitem o curso e que o mesmo ajude a todos nos mais diferentes desafios a serem mais eficientes e produtivos.

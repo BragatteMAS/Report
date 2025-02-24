@@ -1,0 +1,549 @@
+---
+title: "Dumbell"
+format: html
+editor: visual
+---
+```{r}
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+
+# Calcular as médias e desvios padrão para q1 e q5 (não usados diretamente no gráfico)
+stats <- bloodb %>%
+  summarise(
+    mean_q1 = mean(q1 * 100, na.rm = TRUE),
+    mean_q5 = mean(q5 * 100, na.rm = TRUE),
+    sd_q1 = sd(q1 * 100, na.rm = TRUE),
+    sd_q5 = sd(q5 * 100, na.rm = TRUE)
+  )
+
+# Ajustar o gráfico
+ggplot(bloodb) +
+  # Adicionar "dumbbells" conectando q1 e q5
+  geom_dumbbell(aes(x = q1 * 100, xend = q5 * 100, y = location), 
+                size = 1.5, color = "#aeb6bf") +  # Define uma cor única para a linha de conexão
+  
+  # Adicionar pontos finais com cores distintas para q1 e q5
+  geom_point(aes(x = q1 * 100, y = location), color = "#762a83", size = 3) +
+  geom_point(aes(x = q5 * 100, y = location), color = "#009688", size = 3) +
+  
+  # Adicionar título e rótulos dos eixos
+  labs(
+    title = "Comparação de Casos de Dengue Confirmados (%) por Localização",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localização"
+  ) +
+  
+  # Personalizar o tema para melhorar a visualização
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_text(size = 10, hjust = 1),
+    axis.text.x = element_text(size = 10),
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+  
+  # Ajustar limites do eixo X para espaçamento adequado
+  scale_x_continuous(limits = c(0, 100), labels = scales::percent_format(scale = 1))
+
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+
+# Criar uma coluna de datas fictícias associadas a `q1` e `q5`
+# Exemplo: "Nov 2023" para q1 e "Jun 2024" para q5
+bloodb <- bloodb %>%
+  mutate(
+    date_label_q1 = "Nov 2023",
+    date_label_q5 = "Jun 2024"
+  )
+
+# Ajustar o gráfico
+ggplot(bloodb) +
+  # Adicionar "dumbbells" conectando q1 e q5
+  geom_dumbbell(aes(x = q1 * 100, xend = q5 * 100, y = location), 
+                size = 1.5, color = "#aeb6bf") +
+  
+  # Adicionar pontos finais com cores distintas para q1 e q5 e criar legenda
+  geom_point(aes(x = q1 * 100, y = location, color = date_label_q1), size = 3) +
+  geom_point(aes(x = q5 * 100, y = location, color = date_label_q5), size = 3) +
+  
+  # Adicionar título e rótulos dos eixos
+  labs(
+    title = "Comparação de Casos de Dengue Confirmados (%) por Localização",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localização",
+    color = "Data"
+  ) +
+  
+  # Personalizar o tema para melhorar a visualização
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_text(size = 10, hjust = 1),
+    axis.text.x = element_text(size = 10),
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+  
+  # Ajustar limites do eixo X para espaçamento adequado
+  scale_x_continuous(limits = c(0, 100), labels = scales::percent_format(scale = 1)) +
+  
+  # Definir as cores manualmente para a legenda de datas
+  scale_color_manual(
+    values = c("Nov 2023" = "#762a83", "Jun 2024" = "#009688")
+  )
+
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+
+# Calcular estatísticas para desvio padrão (faixa de confiança)
+stats <- bloodb %>%
+  summarise(
+    mean_q1 = mean(q1 * 100),
+    mean_q5 = mean(q5 * 100),
+    sd_q1 = sd(q1 * 100),
+    sd_q5 = sd(q5 * 100)
+  )
+
+# Ordenar localizações pela média de `q1` e `q5`
+bloodb <- bloodb %>%
+  mutate(mean_q = (q1 + q5) / 2) %>%
+  arrange(desc(mean_q))
+
+# Ajustar o gráfico com todas as sugestões
+ggplot(bloodb) +
+  # Adicionar faixas de confiança para q1 e q5
+  geom_rect(
+    xmin = stats$mean_q1 - stats$sd_q1, xmax = stats$mean_q1 + stats$sd_q1,
+    ymin = min(bloodb$location), ymax = max(bloodb$location),
+    fill = "#762a83", alpha = 0.05
+  ) +
+  geom_rect(
+    xmin = stats$mean_q5 - stats$sd_q5, xmax = stats$mean_q5 + stats$sd_q5,
+    ymin = min(bloodb$location), ymax = max(bloodb$location),
+    fill = "#009688", alpha = 0.05
+  ) +
+  
+  # Adicionar "dumbbells" conectando q1 e q5, com destaque maior
+  geom_dumbbell(aes(x = q1 * 100, xend = q5 * 100, y = reorder(location, mean_q)),
+                size = 1.5, color = "#aeb6bf", size_x = 4, size_xend = 4,
+                colour_x = "#762a83", colour_xend = "#009688") +
+  
+  # Adicionar rótulos nos pontos para q1 e q5
+  geom_text(aes(x = q1 * 100, y = location, label = paste0(round(q1 * 100, 2), "%")),
+            hjust = -0.3, color = "#762a83", size = 3) +
+  geom_text(aes(x = q5 * 100, y = location, label = paste0(round(q5 * 100, 2), "%")),
+            hjust = 1.3, color = "#009688", size = 3) +
+  
+  # Adicionar uma linha de anotação destacando variações significativas (ex: Fortaleza)
+  geom_label(aes(x = (q1[location == "Fortaleza"] + q5[location == "Fortaleza"]) / 2 * 100,
+                 y = "Fortaleza",
+                 label = "Variação Significativa!"),
+             nudge_y = 0.3, color = "#4a4e4d", fill = "white", size = 3, fontface = "bold") +
+  
+  # Definir título e rótulos dos eixos
+  labs(
+    title = "Comparação de Casos de Dengue Confirmados (%) por Localização",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localização",
+    color = "Data"
+  ) +
+  
+  # Ajustar tema e elementos do gráfico
+  theme_bw() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_text(size = 10, hjust = 1),
+    axis.text.x = element_text(size = 10),
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+  
+  # Ajustar limites do eixo X para um espaçamento melhor
+  scale_x_continuous(limits = c(0, 110), labels = scales::percent_format(scale = 1)) +
+  
+  # Definir cores para legenda de datas
+  scale_color_manual(
+    values = c("Nov 2023" = "#762a83", "Jun 2024" = "#009688")
+  )
+
+```
+```{r}
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+
+# Calcular estatísticas para desvio padrão (se aplicável)
+stats <- bloodb %>%
+  summarise(
+    mean_q1 = mean(q1 * 100),
+    mean_q5 = mean(q5 * 100),
+    sd_q1 = sd(q1 * 100),
+    sd_q5 = sd(q5 * 100)
+  )
+
+# Ordenar localizações pela média de `q1` e `q5`
+bloodb <- bloodb %>%
+  mutate(mean_q = (q1 + q5) / 2) %>%
+  arrange(desc(mean_q))
+
+# Ajustar o gráfico com todas as sugestões e correções
+ggplot(bloodb) +
+  # Adicionar "dumbbells" conectando q1 e q5, com destaque maior
+  geom_dumbbell(aes(x = q1 * 100, xend = q5 * 100, y = reorder(location, mean_q)),
+                size = 1.5, color = "#aeb6bf", size_x = 4, size_xend = 4,
+                colour_x = "#762a83", colour_xend = "#009688") +
+  
+  # Adicionar rótulos nos pontos para q1 e q5
+  geom_text(aes(x = q1 * 100, y = location, label = paste0(round(q1 * 100, 2), "%")),
+            hjust = -0.3, color = "#762a83", size = 3) +
+  geom_text(aes(x = q5 * 100, y = location, label = paste0(round(q5 * 100, 2), "%")),
+            hjust = 1.3, color = "#009688", size = 3) +
+  
+  # Adicionar barras de erro horizontal para representar variação (faixas de confiança)
+  geom_errorbarh(aes(y = location, xmin = q1 * 100 - stats$sd_q1, xmax = q1 * 100 + stats$sd_q1),
+                 height = 0.2, color = "#762a83", alpha = 0.5) +
+  geom_errorbarh(aes(y = location, xmin = q5 * 100 - stats$sd_q5, xmax = q5 * 100 + stats$sd_q5),
+                 height = 0.2, color = "#009688", alpha = 0.5) +
+  
+  # Definir título e rótulos dos eixos
+  labs(
+    title = "Comparação de Casos de Dengue Confirmados (%) por Localização",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localização",
+    color = "Data"
+  ) +
+  
+  # Ajustar tema e elementos do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_text(size = 10, hjust = 1),
+    axis.text.x = element_text(size = 10),
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+  
+  # Ajustar limites do eixo X para um espaçamento melhor
+  scale_x_continuous(limits = c(0, 110), labels = scales::percent_format(scale = 1)) +
+  
+  # Definir cores para legenda de datas
+  scale_color_manual(
+    values = c("Nov 2023" = "#762a83", "Jun 2024" = "#009688")
+  )
+
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+
+# Calcular estatísticas para desvio padrão (se aplicável)
+stats <- bloodb %>%
+  summarise(
+    mean_q1 = mean(q1 * 100),
+    mean_q5 = mean(q5 * 100),
+    sd_q1 = sd(q1 * 100),
+    sd_q5 = sd(q5 * 100)
+  )
+
+# Ordenar localizações pela média de `q1` e `q5`
+bloodb <- bloodb %>%
+  mutate(mean_q = (q1 + q5) / 2) %>%
+  arrange(desc(mean_q))
+
+# Ajustar o gráfico com todas as sugestões e correções
+ggplot(bloodb) +
+  # Adicionar "dumbbells" conectando q1 e q5, com destaque maior
+  geom_dumbbell(aes(x = q1 * 100, xend = q5 * 100, y = reorder(location, mean_q), color = factor(truncated.date)),
+                size = 1.5, color = "#aeb6bf", size_x = 4, size_xend = 4,
+                colour_x = "#762a83", colour_xend = "#009688") +
+  
+  # Adicionar rótulos nos pontos para q1 e q5
+  geom_text(aes(x = q1 * 100, y = location, label = paste0(round(q1 * 100, 2), "%")),
+            hjust = -0.5, color = "#762a83", size = 3, position = position_nudge(y = 0.1)) +
+  geom_text(aes(x = q5 * 100, y = location, label = paste0(round(q5 * 100, 2), "%")),
+            hjust = 1.5, color = "#009688", size = 3, position = position_nudge(y = -0.1)) +
+  
+  # Adicionar barras de erro horizontal para representar variação (faixas de confiança)
+  geom_errorbarh(aes(y = location, xmin = q1 * 100 - stats$sd_q1, xmax = q1 * 100 + stats$sd_q1),
+                 height = 0.2, color = "#762a83", alpha = 0.5) +
+  geom_errorbarh(aes(y = location, xmin = q5 * 100 - stats$sd_q5, xmax = q5 * 100 + stats$sd_q5),
+                 height = 0.2, color = "#009688", alpha = 0.5) +
+  
+  # Definir título e rótulos dos eixos
+  labs(
+    title = "Comparação de Casos de Dengue Confirmados (%) por Localização",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localização",
+    color = "Data de Interesse"
+  ) +
+  
+  # Ajustar tema e elementos do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_text(size = 10, hjust = 1),
+    axis.text.x = element_text(size = 10),
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+  
+  # Ajustar limites do eixo X para um espaçamento melhor
+  scale_x_continuous(limits = c(0, 110), labels = scales::percent_format(scale = 1)) +
+  
+  # Definir cores para legenda de datas de interesse
+  scale_color_manual(
+    values = c("2023-11-15" = "#762a83", "2024-06-15" = "#009688"),
+    labels = c("Nov 2023", "Jun 2024")
+  )
+
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+
+# Adicionar rótulos separados para as datas
+bloodb <- bloodb %>%
+  mutate(
+    date_label_q1 = "Nov 2023",
+    date_label_q5 = "Jun 2024"
+  )
+
+# Ordenar localizações pela média de `q1` e `q5`
+bloodb <- bloodb %>%
+  mutate(mean_q = (q1 + q5) / 2) %>%
+  arrange(desc(mean_q))
+
+# Ajustar o gráfico com as datas de interesse bem destacadas
+ggplot(bloodb) +
+  # Adicionar "dumbbells" conectando q1 e q5
+  geom_dumbbell(aes(x = q1 * 100, xend = q5 * 100, y = reorder(location, mean_q)),
+                size = 1.5, colour = "#aeb6bf", size_x = 4, size_xend = 4,
+                colour_x = "#762a83", colour_xend = "#009688") +
+  
+  # Adicionar rótulos de valores nos pontos para q1 e q5
+  geom_text(aes(x = q1 * 100, y = location, label = paste0(round(q1 * 100, 2), "%")),
+            hjust = -0.5, color = "#762a83", size = 3, position = position_nudge(y = 0.1)) +
+  geom_text(aes(x = q5 * 100, y = location, label = paste0(round(q5 * 100, 2), "%")),
+            hjust = 1.5, color = "#009688", size = 3, position = position_nudge(y = -0.1)) +
+  
+  # Adicionar pontos individualmente com rótulos das datas de interesse
+  geom_point(aes(x = q1 * 100, y = location, color = date_label_q1), size = 4) +
+  geom_point(aes(x = q5 * 100, y = location, color = date_label_q5), size = 4) +
+  
+  # Definir título e rótulos dos eixos
+  labs(
+    title = "Comparação de Casos de Dengue Confirmados (%) por Localização",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localização",
+    color = "Data de Interesse"
+  ) +
+  
+  # Ajustar tema e elementos do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_text(size = 10, hjust = 1),
+    axis.text.x = element_text(size = 10),
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+  
+  # Ajustar limites do eixo X para espaçamento melhor
+  scale_x_continuous(limits = c(0, 110), labels = scales::percent_format(scale = 1)) +
+  
+  # Definir cores para legenda das datas de interesse
+  scale_color_manual(
+    values = c("Nov 2023" = "#762a83", "Jun 2024" = "#009688"),
+    labels = c("Nov 2023", "Jun 2024")
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+
+# Transformar os dados e criar rótulos para as datas
+bloodb <- bloodb %>%
+  mutate(
+    date_label_q1 = "Nov 2023",
+    date_label_q5 = "Jun 2024"
+  )
+
+# Reordenar as localidades de acordo com a média entre q1 e q5
+bloodb <- bloodb %>%
+  mutate(mean_q = (q1 + q5) / 2) %>%
+  arrange(desc(mean_q))
+
+# Criar gráfico com os elementos pedidos
+ggplot(bloodb) +
+  # Violin plot para cada data de interesse
+  geom_violin(aes(x = date_label_q1, y = location, fill = date_label_q1),
+              alpha = 0.2, width = 0.8, color = NA) +
+  geom_violin(aes(x = date_label_q5, y = location, fill = date_label_q5),
+              alpha = 0.2, width = 0.8, color = NA) +
+
+  # Pontos com jitter para cada valor q1 e q5
+  geom_jitter(aes(x = date_label_q1, y = location, color = date_label_q1),
+              width = 0.15, height = 0, size = 3, alpha = 0.8) +
+  geom_jitter(aes(x = date_label_q5, y = location, color = date_label_q5),
+              width = 0.15, height = 0, size = 3, alpha = 0.8) +
+
+  # Linhas conectando q1 e q5 para cada localização (Dumbbell)
+  geom_dumbbell(aes(y = reorder(location, mean_q), x = q1 * 100, xend = q5 * 100),
+                size = 1, color = "#b0b0b0", size_x = 3, size_xend = 3,
+                color_x = "#762a83", color_xend = "#009688") +
+
+  # Rótulos dos pontos q1 e q5
+  geom_text(aes(x = q1 * 100, y = location, label = paste0(round(q1 * 100, 1), "%")),
+            hjust = -0.4, color = "#762a83", size = 3, nudge_y = 0.1) +
+  geom_text(aes(x = q5 * 100, y = location, label = paste0(round(q5 * 100, 1), "%")),
+            hjust = 1.4, color = "#009688", size = 3, nudge_y = -0.1) +
+
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação de Taxas de Dengue Confirmadas por Localização",
+    subtitle = "Análise de mudanças nas taxas entre Novembro de 2023 e Junho de 2024",
+    x = "Período de Referência",
+    y = "Localidade",
+    color = "Período de Referência",
+    fill = "Período de Referência"
+  ) +
+
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10),
+    axis.title.x = element_text(size = 10, face = "bold"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para as legendas e pontos
+  scale_color_manual(
+    values = c("Nov 2023" = "#762a83", "Jun 2024" = "#009688"),
+    labels = c("Nov 2023", "Jun 2024")
+  ) +
+  scale_fill_manual(
+    values = c("Nov 2023" = "#762a83", "Jun 2024" = "#009688"),
+    labels = c("Nov 2023", "Jun 2024")
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para as datas
+bloodb <- bloodb %>%
+  mutate(
+    date_label_q1 = "Nov 2023",
+    date_label_q5 = "Jun 2024"
+  ) %>%
+  # Calcular a média das taxas para ordenar os municípios
+  mutate(mean_rate = (q1 + q5) / 2) %>%
+  # Ordenar os municípios pela média das taxas
+  arrange(mean_rate) %>%
+  mutate(location = factor(location, levels = unique(location)))
+
+# Criar gráfico com boxplots para cada período e adicionar jitter points
+ggplot(bloodb) +
+  # Boxplot para "Nov 2023"
+  geom_boxplot(aes(x = date_label_q1, y = q1 * 100, fill = location),
+               width = 0.3, position = position_dodge(width = 0.7), outlier.shape = NA, alpha = 0.5) +
+  
+  # Boxplot para "Jun 2024"
+  geom_boxplot(aes(x = date_label_q5, y = q5 * 100, fill = location),
+               width = 0.3, position = position_dodge(width = 0.7), outlier.shape = NA, alpha = 0.5) +
+  
+  # Jitter points para "Nov 2023"
+  geom_jitter(aes(x = date_label_q1, y = q1 * 100, color = location),
+              width = 0.15, height = 0, size = 3, alpha = 0.8) +
+  
+  # Jitter points para "Jun 2024"
+  geom_jitter(aes(x = date_label_q5, y = q5 * 100, color = location),
+              width = 0.15, height = 0, size = 3, alpha = 0.8) +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação de Casos de Dengue Confirmados (%) por Localização",
+    subtitle = "Distribuição das taxas entre Novembro de 2023 e Junho de 2024",
+    x = "Período de Referência",
+    y = "Taxa de Casos Confirmados (%)",
+    fill = "Localidade",
+    color = "Localidade"
+  ) +
+
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    axis.title.x = element_text(size = 10, face = "bold"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_color_manual(
+    values = pal
+  ) +
+  scale_fill_manual(
+    values = pal
+  )
+```
+

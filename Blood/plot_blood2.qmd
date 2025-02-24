@@ -1,0 +1,1013 @@
+---
+title: "2"
+format: html
+editor: visual
+---
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para as datas
+prev <- prev %>%
+  mutate(
+    date_label_q1 = "Nov 2023",
+    date_label_q5 = "Jun 2024"
+  ) %>%
+  # Calcular a média das taxas para ordenar os municípios
+  mutate(mean_rate = (q1 + q5) / 2) %>%
+  # Ordenar os municípios pela média das taxas
+  arrange(mean_rate) %>%
+  mutate(location = factor(location, levels = unique(location)))
+
+# Gráfico de Linhas para Tendências Temporais (usando dfplot)
+ggplot(dfplot, aes(x = DT_SIN_PRI, y = n.events, color = location)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Evolução Temporal dos Casos de Dengue Confirmados",
+    x = "Data de Início dos Sintomas",
+    y = "Número de Eventos",
+    color = "Localidade"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+
+# Boxplot Comparativo de Taxas por Localidade e Período (usando prev)
+ggplot(prev, aes(x = factor(month_year), y = q3 * 100, fill = location)) +
+  geom_boxplot(alpha = 0.6) +
+  labs(
+    title = "Distribuição das Taxas de Casos Confirmados de Dengue (%) por Período",
+    x = "Período (Mês/Ano)",
+    y = "Taxa de Casos Confirmados (%)",
+    fill = "Localidade"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+
+# Dumbbell Plot para Comparar as Taxas Entre Períodos (usando prev)
+ggplot(prev) +
+  geom_dumbbell(aes(y = location, x = q1 * 100, xend = q5 * 100),
+                size = 1.5, color = "#b0b0b0", size_x = 4, size_xend = 4,
+                colour_x = "#762a83", colour_xend = "#009688") +
+  labs(
+    title = "Comparação das Taxas de Dengue Entre Novembro de 2023 e Junho de 2024",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5)
+  )
+
+# Heatmap para Padrões por Localidade e Período (usando prev)
+ggplot(prev, aes(x = factor(month_year), y = location, fill = q3 * 100)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "red") +
+  labs(
+    title = "Heatmap da Intensidade dos Casos Confirmados de Dengue por Localidade e Período",
+    x = "Período (Mês/Ano)",
+    y = "Localidade",
+    fill = "Taxa de Casos Confirmados (%)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para as datas
+prev <- prev %>%
+  mutate(
+    date_label_q1 = "Nov 2023",
+    date_label_q5 = "Jun 2024"
+  ) %>%
+  # Calcular a média das taxas para ordenar os municípios
+  mutate(mean_rate = (q1 + q5) / 2) %>%
+  # Ordenar os municípios pela média das taxas
+  arrange(mean_rate) %>%
+  mutate(location = factor(location, levels = unique(location)))
+
+# Criar Dumbbell Plot aprimorado
+ggplot(prev) +
+  # Plotando as barras dumbbell entre q1 e q5 para cada localidade
+  geom_dumbbell(aes(y = location, x = q1 * 100, xend = q5 * 100),
+                size = 1.5, color = "#b0b0b0", size_x = 4, size_xend = 4,
+                colour_x = "#762a83", colour_xend = "#009688") +
+  
+  # Adicionar pontos representando as taxas médias dos períodos (para fornecer contexto estatístico)
+  geom_point(aes(y = location, x = mean_rate * 100), 
+             shape = 21, fill = "yellow", color = "black", size = 3, stroke = 1) +
+  
+  # Rótulos para as taxas de q1 e q5 diretamente no gráfico
+  geom_text(aes(y = location, x = q1 * 100, label = paste0(round(q1 * 100, 1), "%")), 
+            color = "#762a83", size = 3, hjust = 1.3) +
+  geom_text(aes(y = location, x = q5 * 100, label = paste0(round(q5 * 100, 1), "%")), 
+            color = "#009688", size = 3, hjust = -0.3) +
+  
+  # Adicionar um violin plot sombreado como pano de fundo para visualizar a distribuição da variação
+  geom_violin(aes(x = mean_rate * 100, y = location, fill = location), 
+              alpha = 0.1, width = 0.5, color = NA) +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas Entre Novembro de 2023 e Junho de 2024",
+    subtitle = "Dumbbell plot mostrando a variação das taxas de infecção por localidade",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade",
+    fill = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_color_manual(
+    values = pal
+  ) +
+  scale_fill_manual(
+    values = pal
+  )
+
+```
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para as datas
+bloodb <- bloodb %>%
+  mutate(
+    date_label_q1 = "Nov 2023",
+    date_label_q5 = "Jun 2024"
+  ) %>%
+  # Calcular a média das taxas para ordenar os municípios
+  mutate(mean_rate = (q1 + q5) / 2) %>%
+  # Ordenar os municípios pela média das taxas
+  arrange(mean_rate) %>%
+  mutate(location = factor(location, levels = unique(location)))
+
+# Criar Dumbbell Plot aprimorado
+ggplot(bloodb) +
+  # Plotando as barras dumbbell entre q1 e q5 para cada localidade
+  geom_dumbbell(aes(y = location, x = q1 * 100, xend = q5 * 100),
+                size = 1.5, color = "#b0b0b0", size_x = 4, size_xend = 4,
+                colour_x = "#762a83", colour_xend = "#009688") +
+  
+  # Adicionar pontos representando as taxas médias dos períodos (para fornecer contexto estatístico)
+  geom_point(aes(y = location, x = mean_rate * 100), 
+             shape = 21, fill = "yellow", color = "black", size = 3, stroke = 1) +
+  
+  # Rótulos para as taxas de q1 e q5 diretamente no gráfico
+  geom_text(aes(y = location, x = q1 * 100, label = paste0(round(q1 * 100, 1), "%")), 
+            color = "#762a83", size = 3, hjust = 1.3) +
+  geom_text(aes(y = location, x = q5 * 100, label = paste0(round(q5 * 100, 1), "%")), 
+            color = "#009688", size = 3, hjust = -0.3) +
+  
+  # Adicionar um violin plot sombreado como pano de fundo para visualizar a distribuição da variação
+  geom_violin(aes(x = mean_rate * 100, y = location, fill = location), 
+              alpha = 0.1, width = 0.5, color = NA) +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas Entre Novembro de 2023 e Junho de 2024",
+    subtitle = "Dumbbell plot mostrando a variação das taxas de infecção por localidade",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade",
+    fill = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_color_manual(
+    values = pal
+  ) +
+  scale_fill_manual(
+    values = pal
+  )
+
+```
+## AQUI
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Dumbbell Plot aprimorado com duas linhas por cidade
+ggplot(bloodb_long) +
+  # Plotar os pontos para cada período, separadamente
+  geom_point(aes(x = rate * 100, y = location_period, color = location), size = 4) +
+  
+  # Adicionar uma linha horizontal conectando os pontos para a mesma cidade entre os dois períodos
+  geom_line(aes(x = rate * 100, y = location_period, group = location), size = 1, color = "#b0b0b0", linetype = "dashed") +
+  
+  # Rótulos para as taxas diretamente no gráfico
+  geom_text(aes(x = rate * 100, y = location_period, label = paste0(round(rate * 100, 1), "%")), 
+            size = 3, hjust = -0.3) +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Cada cidade dividida em duas linhas para mostrar as taxas de novembro de 2023 e junho de 2024",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade e Período",
+    color = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_color_manual(
+    values = pal
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Boxplot Horizontal para cada cidade e período
+ggplot(bloodb_long, aes(y = location, x = rate * 100, fill = period_label)) +
+  geom_boxplot(alpha = 0.6, width = 0.5) +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Boxplot mostrando as taxas de novembro de 2023 e junho de 2024 para cada cidade",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade",
+    fill = "Período"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_fill_manual(
+    values = pal
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Boxplot Horizontal para cada cidade e período
+ggplot(bloodb_long, aes(y = location_period, x = rate * 100, fill = period_label)) +
+  geom_boxplot(alpha = 0.6, width = 0.5) +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Boxplot mostrando as taxas de novembro de 2023 e junho de 2024 para cada cidade",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade e Período",
+    fill = "Período"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_fill_manual(
+    values = pal
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Violin Plot Horizontal para cada cidade e período
+ggplot(bloodb_long, aes(y = location_period, x = rate * 100, fill = period_label)) +
+  geom_violin(alpha = 0.6, width = 0.5) +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Violin plot mostrando as taxas de novembro de 2023 e junho de 2024 para cada cidade",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade e Período",
+    fill = "Período"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_fill_manual(
+    values = pal
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Violin Plot Horizontal para cada cidade e período, com cores específicas por cidade
+ggplot(bloodb_long, aes(y = location_period, x = rate * 100, fill = location)) +
+  geom_violin(alpha = 0.6, width = 0.5) +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Violin plot mostrando as taxas de novembro de 2023 e junho de 2024 para cada cidade",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade e Período",
+    fill = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_fill_manual(
+    values = pal
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Violin Plot Horizontal para cada cidade e período, com largura ajustada
+ggplot(bloodb_long, aes(y = location_period, x = rate * 100, fill = location)) +
+  geom_violin(alpha = 0.6, width = 0.8) +  # Ajustar a largura usando o argumento 'width'
+
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Violin plot mostrando as taxas de novembro de 2023 e junho de 2024 para cada cidade",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade e Período",
+    fill = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_fill_manual(
+    values = pal
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Dumbbell Plot aprimorado com duas linhas por cidade
+ggplot(bloodb_long) +
+  # Plotar os pontos para cada período, separadamente
+  geom_point(aes(x = rate * 100, y = location_period, color = location), size = 4) +
+  
+  # Rótulos para as taxas diretamente no gráfico
+  geom_text(aes(x = rate * 100, y = location_period, label = paste0(round(rate * 100, 1), "%")), 
+            size = 3, hjust = -0.3) +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Cada cidade dividida em duas linhas para mostrar as taxas de novembro de 2023 e junho de 2024",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade e Período",
+    color = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_color_manual(
+    values = pal
+  )
+
+```
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar gráfico aprimorado com facetas para cada período
+ggplot(bloodb_long) +
+  # Plotar os pontos para cada período, separadamente
+  geom_point(aes(x = rate * 100, y = location, color = location), size = 4) +
+  
+  # Rótulos para as taxas diretamente no gráfico
+  geom_text(aes(x = rate * 100, y = location, label = paste0(round(rate * 100, 1), "%")), 
+            size = 3, hjust = -0.3) +
+  
+  # Facetar por período para separar visualmente os períodos
+  facet_wrap(~ period_label, scales = "free_y") +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Cada cidade dividida em duas facetas para mostrar as taxas de novembro de 2023 e junho de 2024",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade",
+    color = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_color_manual(
+    values = pal
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Dumbbell Plot aprimorado com duas linhas por cidade, usando facetas por período
+ggplot(bloodb_long) +
+  # Plotar os pontos para cada período, separadamente
+  geom_point(aes(x = rate * 100, y = location, color = location), size = 4) +
+  
+  # Rótulos para as taxas diretamente no gráfico
+  geom_text(aes(x = rate * 100, y = location, label = paste0(round(rate * 100, 1), "%")), 
+            size = 3, hjust = -0.3) +
+  
+  # Facetar por período para separar visualmente os períodos
+  facet_wrap(~ period_label, scales = "free_y") +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Cada cidade dividida em duas facetas para mostrar as taxas de novembro de 2023 e junho de 2024",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade",
+    color = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_color_manual(
+    values = pal
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Boxplots por cidade e período
+ggplot(bloodb_long, aes(x = period_label, y = rate * 100, fill = location)) +
+  # Adicionar os boxplots para cada cidade e período
+  geom_boxplot() +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Boxplots das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Boxplots mostrando a distribuição das taxas de novembro de 2023 e junho de 2024 para cada cidade",
+    x = "Período",
+    y = "Taxa de Casos Confirmados (%)",
+    fill = "Localidade"
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Boxplots por cidade e período, organizando por cidade no eixo Y
+ggplot(bloodb_long, aes(x = rate * 100, y = reorder(location, rate), fill = location)) +
+  # Adicionar os boxplots para cada cidade e período
+  geom_boxplot() +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Boxplots das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Boxplots mostrando a distribuição das taxas de novembro de 2023 e junho de 2024 para cada cidade",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade",
+    fill = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os boxplots
+  scale_fill_manual(
+    values = pal
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Boxplots por cidade e período
+ggplot(bloodb_long, aes(x = rate * 100, y = location_period, fill = location)) +
+  # Adicionar os boxplots para cada cidade e período
+  geom_boxplot() +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Boxplots das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Boxplots mostrando a distribuição das taxas de novembro de 2023 e junho de 2024 para cada cidade",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade e Período",
+    fill = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os boxplots
+  scale_fill_manual(
+    values = pal
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Boxplots por cidade e período com barras de erro
+ggplot(bloodb_long, aes(x = period_label, y = rate * 100, fill = location)) +
+  # Adicionar os boxplots para cada cidade e período
+  geom_boxplot() +
+  
+  # Adicionar barras de erro (usando stat_summary para calcular erro padrão)
+  stat_summary(
+    fun.data = mean_cl_normal, 
+    geom = "errorbar", 
+    width = 0.2, 
+    color = "black"
+  ) +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Boxplots das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Boxplots mostrando a distribuição das taxas de novembro de 2023 e junho de 2024 para cada cidade",
+    x = "Período",
+    y = "Taxa de Casos Confirmados (%)",
+    fill = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os boxplots
+  scale_fill_manual(
+    values = pal
+  )
+
+```
+
+```{r}
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(ggalt)
+library(RColorBrewer)
+
+# Definir paleta de cores com Set2 para as localidades
+pal <- brewer.pal(8, "Set2")
+
+# Transformar os dados e criar rótulos para os períodos e cidades
+bloodb_long <- bloodb %>%
+  pivot_longer(cols = c(q1, q5), names_to = "period", values_to = "rate") %>%
+  mutate(
+    period_label = ifelse(period == "q1", "nov/23", "jun/24"),
+    location_period = paste(location, period_label, sep = " ")
+  ) %>%
+  mutate(location_period = factor(location_period, levels = unique(location_period)))
+
+# Criar Dumbbell Plot aprimorado com duas linhas por cidade
+ggplot(bloodb_long) +
+  # Plotar os pontos para cada período, separadamente
+  geom_point(aes(x = rate * 100, y = location_period, color = location), size = 4) +
+  
+  # Adicionar uma linha horizontal conectando os pontos para a mesma cidade entre os dois períodos
+  geom_line(aes(x = rate * 100, y = location_period, group = location), size = 1, color = "#b0b0b0", linetype = "dashed") +
+  
+  # Rótulos para as taxas diretamente no gráfico
+  geom_text(aes(x = rate * 100, y = location_period, label = paste0(round(rate * 100, 1), "%")), 
+            size = 3, hjust = -0.3) +
+  
+  # Títulos e rótulos dos eixos
+  labs(
+    title = "Comparação das Taxas de Dengue Confirmadas por Localidade e Período",
+    subtitle = "Cada cidade dividida em duas linhas para mostrar as taxas de novembro de 2023 e junho de 2024",
+    x = "Taxa de Casos Confirmados (%)",
+    y = "Localidade e Período",
+    color = "Localidade"
+  ) +
+  
+  # Tema para melhorar a apresentação do gráfico
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    axis.text.y = element_text(size = 10, color = "black"),
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 9, face = "bold"),
+    plot.margin = margin(1, 1, 0.5, 1, "cm")
+  ) +
+
+  # Ajuste das cores para os pontos e preenchimento
+  scale_color_manual(
+    values = pal
+  )
+
+```
+

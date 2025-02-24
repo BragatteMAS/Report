@@ -1,0 +1,40 @@
+---
+title: "Saved: validação com dados de Florianópolis/Santa Catarina"
+subtitle: "Este documento é um relatório com apresentação de séries temporais municipais cruzadas contra dados governamentais de saúde pública"
+format:
+  lumo-html: 
+    logo: "logo.png"                                     # Optional. Path to a logo displayed above the title
+    github-repo: "https://github.com/holtzy/lumo"        # Optional. Adds a github corner at the top right
+    primary-color: "#69b3a2"
+    self-contained: true
+    is-particlejs-enabled: true                          # Optional: display interactive particles in the document header
+    bg-image: ""                                         # Optional: link to an image for the header background
+author: Bragatte, Deney e Erick da equipe ITpS
+date: last-modified
+---
+
+
+
+
+## Introduction
+
+Quarto is probably my favorite tool in the R/Python universe. Transforming your code and thoughts into a stunning report in one click always blows my mind.
+
+While the default Quarto appearance **looks great**, there are [a few tweaks](https://www.productive-r-workflow.com/quarto-tricks) I always apply to elevate the report even further. Rather than manually adding them each time, I bundled everything into a custom format called `lumo`.
+
+
+::: {.column-margin}
+
+Btw, you can learn how to master Quarto thanks to my online course: [Productive R Workflow](https://www.productive-r-workflow.com)
+
+:::
+
+
+This document aims at showcasing how a quarto document made with the `lumo` format looks like.
+
+
+## Documentation
+
+The documentation for this quarto custom format is available [here](https://www.productive-r-workflow.com/r/bonus/lumo-quarto-template)
+
+
